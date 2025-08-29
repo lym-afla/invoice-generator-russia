@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Акт сдачи-приемки оказанных услуг</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 1.5cm 1.5cm 1.5cm;
+        }        
+        body {
+            font-family: 'Aptos', Arial, sans-serif, Calibri;
+            font-size: 12pt;
+            color: #000;
+        }
+        .act-box {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        p {
+            text-align: justify;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 20px;
+        }
+        .header-table {
+            margin-bottom: 20px;
+        }
+        .header-table td.date {
+            text-align: right;
+        }
+        .services-table {
+            width: 100%;
+            margin: 20px 0;
+            border: 1px solid black;
+        }
+        .services-table th, .services-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .services-table th {
+            font-weight: bold;
+        }
+        .services-table .service-name {
+            text-align: left;
+        }
+        .signature-table {
+            margin-top: 30px;
+        }
+        .signature-table td {
+            width: 50%;
+            padding: 5px 15px;
+            vertical-align: top;
+        }
+        .signature-table strong {
+            font-weight: bold;
+        }
+        .signature-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .signature-img {
+            position: absolute;
+            bottom: -20px;  /* This will overlap the line */
+            left: 50%;
+            transform: translateX(-50%);
+            height: 100px;    /* Much bigger - realistic signature size */
+            max-width: 250px; /* Wider signature */
+            z-index: 10; /* Ensure signature appears above the line */
+        }
+        .signature-line {
+            border-bottom: 1px solid black;
+            height: 40px;
+            margin-top: 40px;
+            position: relative;
+        }
+        .signature-caption {
+            text-align: center;
+            font-size: 10pt;
+        }
+        .list-indent {
+            text-indent: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="act-box">
+    
+    <div class="title">АКТ СДАЧИ-ПРИЕМКИ ОКАЗАННЫХ УСЛУГ</div>
+
+    <table class="header-table">
+        <tr>
+            <td>г. Москва</td>
+            <td class="date">"{{ document.day }}" {{ document.month_name }} {{ document.year }} г.</td>
+        </tr>
+    </table>
+
+    <p>
+        <strong>{{ customer.name }}</strong>, именуемый в дальнейшем «Заказчик», с одной стороны, и
+        <strong>{{ contractor.legal_form }} {{ contractor.name }}</strong>, ОГРНИП {{ contractor.ogrnip }}, ИНН {{ contractor.inn }}, именуемый в дальнейшем «Исполнитель», с другой стороны, при совместном упоминании именуемые «Стороны», а по отдельности «Сторона», составили настоящий акт к договору на оказание консультационных услуг от "{{ contract.day }}" {{ contract.month_name }} {{ contract.year }} г. (далее – «Акт», «Договор» соответственно) о том, что:
+    </p>
+
+    <p class="list-indent">1. В соответствии с Договором Исполнитель оказал, а Заказчик принял следующие услуги:</p>
+
+    <table class="services-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">№</th>
+                <th class="service-name">Содержание (вид) услуги</th>
+                <th>Начало</th>
+                <th>Окончание</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td class="service-name">{{ service.description }}</td>
+                <td>{{ service.start_date }}</td>
+                <td>{{ service.end_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p class="list-indent">
+        Общая стоимость оказанных услуг составляет <strong>{{ "{:,.0f}".format(totals.value).replace(",", " ") }}</strong> рублей (с учетом курса ЦБ РФ {{ "%.4f"|format(totals.fx_rate) }})
+    </p>
+    
+    <p class="list-indent">2. Оказанные услуги приняты Заказчиком без замечаний.</p>
+    <p class="list-indent">3. Акт составлен в двух экземплярах, по одному для каждой из сторон.</p>
+    <p class="list-indent">4. Реквизиты и подписи сторон:</p>
+
+    <table class="signature-table">
+        <tr>
+            <td><strong>Заказчик:</strong></td>
+            <td><strong>Исполнитель:</strong></td>
+        </tr>
+        <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ contractor.legal_form_short }} {{ contractor.name }}</td>
+        </tr>
+        <tr>
+            <td>
+                <div class="signature-container">
+                    <div class="signature-line"></div>
+                </div>
+                <div class="signature-caption">/{{ customer.signature_name }}/</div>
+            </td>
+            <td>
+                <div class="signature-container">
+                    <div class="signature-line">
+                        {% if signatures and signatures.director %}
+                            <img src="data:image/jpeg;base64,{{ signatures.director }}" alt="Signature" class="signature-img">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="signature-caption">/{{ contractor.signature_name }}/</div>
+            </td>
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>

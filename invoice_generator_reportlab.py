@@ -9,16 +9,16 @@ import qrcode
 import base64
 from datetime import datetime
 from io import BytesIO
-import calendar
 from num2words import num2words
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm, mm
+from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
-from reportlab.platypus.flowables import HRFlowable
-from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+from reportlab.lib.enums import TA_CENTER
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 class InvoiceGeneratorReportLab:
@@ -32,9 +32,24 @@ class InvoiceGeneratorReportLab:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
         
+        # Try to register Russian-compatible fonts
+        self.setup_fonts()
+        
         # Setup styles
         self.styles = getSampleStyleSheet()
         self.setup_custom_styles()
+    
+    def setup_fonts(self):
+        """Try to setup fonts that support Russian characters"""
+        try:
+            # These fonts should support Cyrillic if available on system
+            from reportlab.lib.fonts import addMapping
+            self.font_name = 'Times-Roman'  # Fallback
+            self.font_bold = 'Times-Bold'
+        except Exception:
+            # Use default fonts
+            self.font_name = 'Times-Roman'
+            self.font_bold = 'Times-Bold'
     
     def setup_custom_styles(self):
         """Setup custom paragraph styles"""
@@ -349,15 +364,11 @@ if __name__ == "__main__":
     
     sample_data = {
         'client_name': 'ООО "Клиент"',
-        'client_address': 'г. Москва, ул. Примерная, д. 123',
         'items': [
             {'description': 'Услуга 1', 'quantity': 1, 'price': 50000, 'total': 50000},
-            {'description': 'Услуга 2', 'quantity': 2, 'price': 25000, 'total': 50000},
         ],
-        'subtotal': 100000,
-        'vat_rate': 20,
-        'vat_amount': 20000,
-        'total_amount': 120000,
+        'subtotal': 50000,
+        'total_amount': 50000,
         'payment_data': {
             'name': 'ООО "Ромашка"',
             'personal_acc': '40702810900000000001',

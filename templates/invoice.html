@@ -2,262 +2,267 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Счёт № {{ invoice_number }}</title>
+    <title>Счет №{{ invoice_number }}</title>
     <style>
         @page {
             size: A4;
-            margin: 1.5cm;
+            margin: 2cm 1.5cm 1.5cm 1.5cm;
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11px;
+            font-family: 'Aptos', Arial, sans-serif, Calibri;
+            font-size: 12pt;
             line-height: 1.3;
             color: #000;
             margin: 0;
             padding: 0;
         }
-        
-        .header {
-            text-align: left;
-            margin-bottom: 25px;
+        .invoice-box {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .invoice-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .company-header {
-            margin-bottom: 20px;
-            font-size: 12px;
-        }
-        
-        .company-name {
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .invoice-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .company-info {
-            width: 48%;
-        }
-        
-        .company-title {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
         }
-        
-        .table th,
-        .table td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        td, th {
+            padding: 2px;
+            vertical-align: top;
+        }
+        .header-table td {
+            padding-bottom: 15px;
+        }
+        .bank-details-container td {
+            vertical-align: middle;
+        }
+        .bank-details-container {
+            width: 100%;
+        }
+        .bank-details-table {
+            width: 100%;
+            border: 2px solid black;
+            padding: 0;
+        }
+        .bank-details-table td {
+            border: 1px solid black;
+            padding: 4px 8px;
+        }
+        .qr-code-cell {
+            width: 140px; /* Fixed reasonable width */
+            margin: 0;
+            vertical-align: top;
+            text-align: center;
+        }
+        .qr-code {
+            width: 140px; /* Slightly smaller than cell */
+            height: 140px; /* Force square */
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+        }
+        .invoice-title {
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 35px 0;
+        }
+        .payer-details-table td {
+            padding: 4px 0;
+        }
+        .payer-details-table .label {
+            width: 25%;
+        }
+        .items-table {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .items-table th, .items-table td {
+            border-bottom: 1px solid lightgrey;
+            border-right: 1px solid lightgrey;
+            padding: 5px;
+        }
+        .items-table .text-left {
             text-align: left;
         }
-        
-        .table th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-            text-align: center;
-            font-size: 10px;
-        }
-        
-        .table .number-col {
-            width: 8%;
-            text-align: center;
-        }
-        
-        .table .description-col {
-            width: 50%;
-        }
-        
-        .table .unit-col {
-            width: 8%;
-            text-align: center;
-        }
-        
-        .table .quantity-col,
-        .table .price-col,
-        .table .total-col {
-            width: 11%;
+        .items-table .text-right {
             text-align: right;
         }
-        
-        .totals {
-            margin-bottom: 20px;
+        .summary-table {
+            margin-top: 20px;
         }
-        
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
+        .summary-table td {
+            padding: 5px 0;
         }
-        
-        .total-label {
-            font-weight: bold;
+        .summary-table .total-label {
+            text-align: right;
+            padding-left: 20px;
         }
-        
-        .highlight {
-            background-color: #ffff99;
-            padding: 2px 4px;
+        .summary-table .total-value {
+            text-align: right;
         }
-        
-        .amount-in-words {
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-        }
-        
-        .qr-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        .signature-section {
             margin-top: 30px;
         }
-        
-        .qr-code {
-            text-align: center;
-        }
-        
-        .qr-code img {
+      
+        .signature-container {
+            position: relative;
             width: 150px;
-            height: 150px;
-        }
-        
-        .payment-details {
-            width: 60%;
-            font-size: 10px;
-        }
-        
-        .signature-section {
-            margin-top: 40px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .signature {
-            text-align: center;
-            width: 40%;
+            height: 60px;
+            margin-bottom: 10px;
         }
         
         .signature-line {
-            border-bottom: 1px solid #333;
-            height: 30px;
-            margin-bottom: 5px;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            border-bottom: 1px solid black;
         }
         
-        .page-break {
-            page-break-before: always;
+        .signature-img {
+            position: absolute;
+            bottom: -10px;  /* This will overlap the line */
+            left: 50%;
+            transform: translateX(-50%);
+            height: 100px;    /* Much bigger - realistic signature size */
+            max-width: 250px; /* Wider signature */
+            z-index: 10; /* Ensure signature appears above the line */
         }
     </style>
 </head>
 <body>
-    <div class="company-header">
-        <div class="company-name">{{ company_name | default("ООО \"Ромашка\"") }}</div>
-        <div>ИНН: {{ company_inn | default("7701234567") }}</div>
+<div class="invoice-box">
+    
+    <table class="header-table">
+        <tr>
+            <td>
+                <strong style="font-size: 14pt;">{{ payee.legal_form_short }} {{ payee.name }}</strong><br>
+                <span style="font-size: 11pt; font-weight: normal;">Получатель</span>
+            </td>
+            <td style="text-align: right; font-weight: bold; font-size: 14pt;">
+                {{ "{:,.2f}".format(totals.total).replace(",", " ") }} &#8381;<br>
+                <span style="font-size: 11pt; font-weight: normal;">Без НДС</span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="bank-details-container">
+        <tr>
+            <td style="width: 85%; vertical-align: top; padding: 0;">
+                <table class="bank-details-table">
+                    <tr>
+                        <td style="font-weight: bold; border-bottom: none; border-right: 1px solid lightgrey;">{{ payee.bank_name }}</td>
+                        <td style="width: 15%; text-align: right; font-size: 10pt; border-bottom: none; border-right: 1px solid lightgrey;">БИК</td>
+                        <td style="width: 25%; border-bottom: none; font-size: 10pt;">{{ payee.bank_bik }}</td>
+                    </tr>
+                    <tr style="font-size: 10pt;">
+                        <td style="border-top: none; border-bottom: none; border-right: 1px solid lightgrey;">Банк получателя</td>
+                        <td style="border-top: none; border-bottom: none; text-align: right; border-right: 1px solid lightgrey;">Кор. Счёт</td>
+                        <td style="border-top: none; border-bottom: none;">{{ payee.bank_corr_account }}</td>
+                    </tr>
+                    <tr style="font-size: 10pt;">
+                        <td style="border-bottom: 1px solid lightgrey; border-right: 1px solid lightgrey;">ИНН {{ payee.inn }}</td>
+                        <td style="border-bottom: none; text-align: right; border-right: 1px solid lightgrey;">Счёт</td>
+                        <td style="border-bottom: none;">{{ payee.account_number }}</td>
+                    </tr>
+                    <tr>
+                        <td style="border-top: none; border-bottom: none; font-weight: bold; border-right: 1px solid lightgrey; white-space: nowrap;">{{ payee.name }}</td>
+                        <td style="border-top: none; border-bottom: none; font-size: 10pt; border-right: 1px solid lightgrey;"></td>
+                    </tr>
+                    <tr style="font-size: 10pt;">
+                        <td style="border-top: none; border-right: 1px solid lightgrey;">Получатель</td>
+                        <td style="border-top: none; border-right: 1px solid lightgrey;"></td>   
+                        <td style="border-top: none;"></td>
+                    </tr>
+                </table>
+            </td>
+            <td class="qr-code-cell">
+                <div class="qr-code">
+                    <img src="{{ qr_code_data_uri }}" alt="QR Code">
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="invoice-title">
+        Счёт №{{ invoice.number }} от {{ invoice.date }}
     </div>
 
-    <div class="header">
-        <div class="invoice-title">Счёт № {{ invoice_number }} от {{ invoice_date }}</div>
-    </div>
+    <table class="payer-details-table">
+        <tr>
+            <td class="label">Получатель:</td>
+            <td>{{ payee.details_string }}</td>
+        </tr>
+        <tr>
+            <td class="label">Плательщик:</td>
+            <td>{{ payer.name }}</td>
+        </tr>
+    </table>
 
-    <div class="invoice-meta">
-        <div class="company-info">
-            <div class="company-title"><strong>Поставщик:</strong></div>
-            <div>{{ company_name | default("ООО \"Ромашка\"") }}</div>
-            <div>{{ company_address | default("г. Москва, ул. Примерная, д. 1") }}</div>
-            <div>ИНН: {{ company_inn | default("7701234567") }}, КПП: {{ company_kpp | default("770101001") }}</div>
-        </div>
-        
-        <div class="company-info" style="margin-top: 15px;">
-            <div class="company-title"><strong>Покупатель:</strong></div>
-            <div>{{ client_name }}</div>
-            <div>{{ client_address }}</div>
-            {% if client_inn %}<div>ИНН: {{ client_inn }}</div>{% endif %}
-        </div>
-    </div>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th class="number-col">№</th>
-                <th class="description-col">Наименование товара, работ, услуг</th>
-                <th class="unit-col">Ед.</th>
-                <th class="quantity-col">Кол-во</th>
-                <th class="price-col">Цена</th>
-                <th class="total-col">Сумма</th>
+    <table class="items-table">
+        <thead style="font-size: 10pt; font-weight: normal !important;">
+            <tr style="border-bottom: 2px solid;">
+                <th>№</th>
+                <th class="text-left">Название товара или услуги</th>
+                <th>Кол-во</th>
+                <th>Цена</th>
+                <th>НДС</th>
+                <th class="text-right" style="border-right: none;">Сумма</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
+        {% for item in items %}
             <tr>
-                <td class="number-col">{{ loop.index }}</td>
-                <td class="description-col">{{ item.description }}</td>
-                <td class="unit-col">{{ item.unit | default("шт.") }}</td>
-                <td class="quantity-col">{{ item.quantity }}</td>
-                <td class="price-col">{{ "{:,.2f}".format(item.price) }}</td>
-                <td class="total-col highlight">{{ "{:,.2f}".format(item.total) }}</td>
+                <td>{{ loop.index }}</td>
+                <td class="text-left">{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ "{:,.2f}".format(item.price).replace(",", " ") }} &#8381;</td>
+                <td>{{ item.vat_rate }}</td>
+                <td class="text-right" style="font-weight: bold; border-right: none;">{{ "{:,.2f}".format(item.total).replace(",", " ") }} &#8381;</td>
             </tr>
-            {% endfor %}
-            <tr style="border-top: 2px solid #000;">
-                <td colspan="5" style="text-align: right; font-weight: bold;">Итого:</td>
-                <td class="total-col highlight" style="font-weight: bold;">{{ "{:,.2f}".format(total_amount) }}</td>
-            </tr>
+        {% endfor %}
         </tbody>
     </table>
 
-    <div class="amount-in-words" style="margin: 20px 0; font-size: 12px;">
-        <strong>Всего наименований {{ items|length }}, на сумму <span class="highlight">{{ "{:,.2f}".format(total_amount) }} руб.</span></strong>
-    </div>
+    <table class="summary-table">
+        <tr>
+            <td style="width: 60%;">Всего {{ items|length }} наименование на сумму {{ totals.total_in_words }}.</td>
+            <td class="total-label">Итог к оплате:</td>
+            <td class="total-value" style="font-size: 14pt; font-weight: bold;">{{ "{:,.2f}".format(totals.total).replace(",", " ") }} &#8381;</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td class="total-value" style="font-weight: normal;">Без НДС</td>
+        </tr>
+    </table>
     
-    <div class="amount-in-words" style="margin: 15px 0; font-size: 11px;">
-        <span class="highlight">{{ amount_in_words }}</span>
-    </div>
-
-    <div class="qr-section">
-        <div class="payment-details">
-            <strong>Банковские реквизиты:</strong><br>
-            Получатель: {{ payment_data.name | default("") }}<br>
-            Расчетный счет: {{ payment_data.personal_acc | default("") }}<br>
-            Банк: {{ payment_data.bank_name | default("") }}<br>
-            БИК: {{ payment_data.bic | default("") }}<br>
-            Корр. счет: {{ payment_data.corresp_acc | default("") }}<br>
-            ИНН: {{ payment_data.payee_inn | default("") }}<br>
-            КПП: {{ payment_data.kpp | default("") }}<br>
-            Назначение платежа: {{ payment_data.purpose | default("") }}
-        </div>
-        
-        <div class="qr-code">
-            <img src="{{ qr_code }}" alt="QR Code для оплаты">
-            <div>Оплата по QR-коду</div>
-        </div>
-    </div>
-
     <div class="signature-section">
-        <div class="signature">
-            <div class="signature-line"></div>
-            <div>Руководитель</div>
-        </div>
-        
-        <div class="signature">
-            <div class="signature-line"></div>
-            <div>Главный бухгалтер</div>
+        <table>
+            <tr>
+                <td style="width: 100px; padding-bottom: 30px; vertical-align: bottom;">Получатель:</td>
+                <td>
+                    <div class="signature-container">
+                        <div class="signature-line"></div>
+                        {% if signatures and signatures.director %}
+                            <img src="data:image/jpeg;base64,{{ signatures.director }}" alt="Signature" class="signature-img">
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: left; padding-top: 5px;">
+            <div>{{ payee.legal_form }}</div>
+            <div>{{ payee.name }}</div>
         </div>
     </div>
+
+</div>
 </body>
 </html>
