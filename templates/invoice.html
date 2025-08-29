@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Счёт № {{ invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.3;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .invoice-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .company-header {
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .company-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .invoice-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .company-info {
+            width: 48%;
+        }
+        
+        .company-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .table th,
+        .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .table .number-col {
+            width: 8%;
+            text-align: center;
+        }
+        
+        .table .description-col {
+            width: 50%;
+        }
+        
+        .table .unit-col {
+            width: 8%;
+            text-align: center;
+        }
+        
+        .table .quantity-col,
+        .table .price-col,
+        .table .total-col {
+            width: 11%;
+            text-align: right;
+        }
+        
+        .totals {
+            margin-bottom: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .total-label {
+            font-weight: bold;
+        }
+        
+        .highlight {
+            background-color: #ffff99;
+            padding: 2px 4px;
+        }
+        
+        .amount-in-words {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        
+        .qr-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 30px;
+        }
+        
+        .qr-code {
+            text-align: center;
+        }
+        
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+        }
+        
+        .payment-details {
+            width: 60%;
+            font-size: 10px;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .signature {
+            text-align: center;
+            width: 40%;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #333;
+            height: 30px;
+            margin-bottom: 5px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="company-header">
+        <div class="company-name">{{ company_name | default("ООО \"Ромашка\"") }}</div>
+        <div>ИНН: {{ company_inn | default("7701234567") }}</div>
+    </div>
+
+    <div class="header">
+        <div class="invoice-title">Счёт № {{ invoice_number }} от {{ invoice_date }}</div>
+    </div>
+
+    <div class="invoice-meta">
+        <div class="company-info">
+            <div class="company-title"><strong>Поставщик:</strong></div>
+            <div>{{ company_name | default("ООО \"Ромашка\"") }}</div>
+            <div>{{ company_address | default("г. Москва, ул. Примерная, д. 1") }}</div>
+            <div>ИНН: {{ company_inn | default("7701234567") }}, КПП: {{ company_kpp | default("770101001") }}</div>
+        </div>
+        
+        <div class="company-info" style="margin-top: 15px;">
+            <div class="company-title"><strong>Покупатель:</strong></div>
+            <div>{{ client_name }}</div>
+            <div>{{ client_address }}</div>
+            {% if client_inn %}<div>ИНН: {{ client_inn }}</div>{% endif %}
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="number-col">№</th>
+                <th class="description-col">Наименование товара, работ, услуг</th>
+                <th class="unit-col">Ед.</th>
+                <th class="quantity-col">Кол-во</th>
+                <th class="price-col">Цена</th>
+                <th class="total-col">Сумма</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="number-col">{{ loop.index }}</td>
+                <td class="description-col">{{ item.description }}</td>
+                <td class="unit-col">{{ item.unit | default("шт.") }}</td>
+                <td class="quantity-col">{{ item.quantity }}</td>
+                <td class="price-col">{{ "{:,.2f}".format(item.price) }}</td>
+                <td class="total-col highlight">{{ "{:,.2f}".format(item.total) }}</td>
+            </tr>
+            {% endfor %}
+            <tr style="border-top: 2px solid #000;">
+                <td colspan="5" style="text-align: right; font-weight: bold;">Итого:</td>
+                <td class="total-col highlight" style="font-weight: bold;">{{ "{:,.2f}".format(total_amount) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="amount-in-words" style="margin: 20px 0; font-size: 12px;">
+        <strong>Всего наименований {{ items|length }}, на сумму <span class="highlight">{{ "{:,.2f}".format(total_amount) }} руб.</span></strong>
+    </div>
+    
+    <div class="amount-in-words" style="margin: 15px 0; font-size: 11px;">
+        <span class="highlight">{{ amount_in_words }}</span>
+    </div>
+
+    <div class="qr-section">
+        <div class="payment-details">
+            <strong>Банковские реквизиты:</strong><br>
+            Получатель: {{ payment_data.name | default("") }}<br>
+            Расчетный счет: {{ payment_data.personal_acc | default("") }}<br>
+            Банк: {{ payment_data.bank_name | default("") }}<br>
+            БИК: {{ payment_data.bic | default("") }}<br>
+            Корр. счет: {{ payment_data.corresp_acc | default("") }}<br>
+            ИНН: {{ payment_data.payee_inn | default("") }}<br>
+            КПП: {{ payment_data.kpp | default("") }}<br>
+            Назначение платежа: {{ payment_data.purpose | default("") }}
+        </div>
+        
+        <div class="qr-code">
+            <img src="{{ qr_code }}" alt="QR Code для оплаты">
+            <div>Оплата по QR-коду</div>
+        </div>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature">
+            <div class="signature-line"></div>
+            <div>Руководитель</div>
+        </div>
+        
+        <div class="signature">
+            <div class="signature-line"></div>
+            <div>Главный бухгалтер</div>
+        </div>
+    </div>
+</body>
+</html>
