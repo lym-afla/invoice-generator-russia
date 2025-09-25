@@ -67,7 +67,7 @@ class InvoiceGeneratorHTML:
             f"PayeeINN={qr_data.get('payee_inn', '')}|"
             f"KPP={qr_data.get('kpp', '')}|"
             f"Sum={qr_data.get('sum', '')}|"
-            f"Purpose=Оплата по счету №{invoice_number} от {datetime.now().strftime("%d.%m.%Y")}"
+            f"Purpose=Оплата по счету №{invoice_number} от {datetime.now().strftime('%d.%m.%Y')}"
         )
         
         # Generate QR code
