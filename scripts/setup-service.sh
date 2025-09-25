@@ -5,7 +5,7 @@
 # Configuration
 SERVICE_NAME="invoice-bot"
 APP_DIR="/opt/invoice-generator"
-APP_USER="invoice-bot"
+APP_USER="invoice-bot"  # Will be auto-detected if needed
 SYMLINK_PATH="/usr/local/bin/invoice-bot"
 
 # Colors for output
@@ -39,17 +39,58 @@ check_root() {
     fi
 }
 
-# Create application user
-create_app_user() {
-    print_header "Creating application user..."
+# Detect and configure user
+detect_and_configure_user() {
+    print_header "Configuring application user..."
     
-    if id "$APP_USER" &>/dev/null; then
-        print_warning "User $APP_USER already exists"
-    else
-        # Create system user with home directory
-        useradd --system --create-home --home-dir "/home/$APP_USER" --shell /bin/bash "$APP_USER"
-        print_status "User $APP_USER created"
+    # If APP_USER is set to a specific existing user, use that
+    if [ "$APP_USER" != "invoice-bot" ] && id "$APP_USER" &>/dev/null; then
+        print_status "Using existing user: $APP_USER"
+        return
     fi
+    
+    # If invoice-bot user already exists, use it
+    if id "invoice-bot" &>/dev/null; then
+        APP_USER="invoice-bot"
+        print_status "Using existing invoice-bot user"
+        return
+    fi
+    
+    # Try to detect the actual user who ran sudo
+    if [ -n "$SUDO_USER" ] && id "$SUDO_USER" &>/dev/null; then
+        print_status "Detected user who ran sudo: $SUDO_USER"
+        echo "Choose user configuration:"
+        echo "1) Create dedicated 'invoice-bot' user (recommended for production)"
+        echo "2) Use existing user '$SUDO_USER'"
+        read -p "Enter choice (1 or 2): " choice
+        
+        case $choice in
+            1)
+                create_invoice_bot_user
+                ;;
+            2)
+                APP_USER="$SUDO_USER"
+                print_status "Using existing user: $APP_USER"
+                ;;
+            *)
+                print_warning "Invalid choice, creating dedicated user"
+                create_invoice_bot_user
+                ;;
+        esac
+    else
+        # Default: create invoice-bot user
+        create_invoice_bot_user
+    fi
+}
+
+# Create dedicated invoice-bot user
+create_invoice_bot_user() {
+    print_status "Creating dedicated 'invoice-bot' user..."
+    
+    # Create system user with home directory
+    useradd --system --create-home --home-dir "/home/invoice-bot" --shell /bin/bash "invoice-bot"
+    APP_USER="invoice-bot"
+    print_status "User $APP_USER created"
     
     # Add user to necessary groups
     usermod -aG systemd-journal "$APP_USER" 2>/dev/null || true
@@ -241,7 +282,7 @@ main() {
     
     check_root
     validate_environment
-    create_app_user
+    detect_and_configure_user
     setup_permissions
     create_service_file
     create_symlink

@@ -174,3 +174,4 @@ bot_data.json
 # OS-specific files
 .DS_Store
 Thumbs.db
+PERMISSION_FIX.md
