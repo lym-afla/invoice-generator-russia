@@ -119,6 +119,9 @@ setup_permissions() {
     chmod +x "$APP_DIR/scripts/"*.sh 2>/dev/null || true
     chmod +x "$APP_DIR/"*.py 2>/dev/null || true
     
+    # Ensure management script is executable
+    chmod +x "$APP_DIR/scripts/manage-invoice-bot.sh"
+    
     # Secure sensitive files
     chmod 600 "$APP_DIR/.env" 2>/dev/null || true
     chmod 700 "$APP_DIR/signatures" 2>/dev/null || true
@@ -205,6 +208,9 @@ create_symlink() {
     # Create new symlink
     ln -s "$script_path" "$SYMLINK_PATH"
     print_status "Symlink created: $SYMLINK_PATH -> $script_path"
+    
+    # Ensure symlink is executable
+    chmod +x "$SYMLINK_PATH"
     
     # Test symlink
     if [ -x "$SYMLINK_PATH" ]; then

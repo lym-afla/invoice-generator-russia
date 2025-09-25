@@ -298,6 +298,10 @@ update_app() {
     chown -R "${APP_USER}:${APP_USER}" "${APP_DIR}"
     chmod +x "${APP_DIR}/scripts/"*.sh 2>/dev/null || true
     
+    # Ensure management script and symlink remain executable after updates
+    chmod +x "${APP_DIR}/scripts/manage-invoice-bot.sh"
+    chmod +x "/usr/local/bin/invoice-bot" 2>/dev/null || true
+    
     # Configure git to ignore file mode changes and reset any phantom changes
     sudo -u "${APP_USER}" bash -c "
         cd '${APP_DIR}'
