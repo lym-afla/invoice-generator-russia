@@ -2,35 +2,47 @@
 Configuration file for Invoice Generator
 """
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # Company information (Contractor/Payee)
 COMPANY_INFO = {
     'legal_form': 'Индивидуальный предприниматель',
     'legal_form_short': 'ИП',
-    'name': 'Линик Ярослав Михайлович',
-    'inn': '890305332590',
-    'ogrnip': '325774600140091',
+    'name': os.getenv('COMPANY_NAME'),
+    'inn': os.getenv('COMPANY_INN'),
+    'ogrnip': os.getenv('COMPANY_OGRNIP'),
     'signature_name': 'Я.М. Линик'
 }
 
 # Bank details for QR code generation
 BANK_INFO = {
-    'name': 'Линик Ярослав Михайлович',
-    'personal_acc': '42301810900076433520',
-    'bank_name': 'АО "ТБанк"',
-    'bic': '044525974',
-    'corresp_acc': '30101810145250000974'
+    'name': os.getenv('COMPANY_NAME'),
+    'personal_acc': os.getenv('BANK_PERSONAL_ACC'),
+    'bank_name': os.getenv('BANK_NAME'),
+    'bic': os.getenv('BANK_BIC', '044525974'),
+    'corresp_acc': os.getenv('BANK_CORRESP_ACC')
 }
 
 # Default client information
 CLIENT_INFO = {
-    'name': 'Гуринов Вадим Александрович',
-    'contract_date': '2025-05-26',  # Format: YYYY-MM-DD
+    'name': os.getenv('CLIENT_NAME'),
+    'contract_date': os.getenv('CLIENT_CONTRACT_DATE'),  # Format: YYYY-MM-DD
 }
 
 # Financial settings
 FINANCIAL_SETTINGS = {
-    'base_rate': 16667,  # Base rate in USD
-    'currency': 'USD',       # Default currency for FX rate
+    'base_rate': int(os.getenv('BASE_RATE')),  # Base rate in USD
+    'currency': os.getenv('CURRENCY'),           # Default currency for FX rate
+}
+
+# Telegram Bot Configuration
+TELEGRAM_CONFIG = {
+    'bot_token': os.getenv('TELEGRAM_BOT_TOKEN'),
+    'chat_id': os.getenv('TELEGRAM_CHAT_ID'),
 }
 
 # File paths

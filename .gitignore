@@ -168,6 +168,9 @@ signatures/
 # Configuration overrides
 local_config.py
 
+# Bot storage and sensitive data
+bot_data.json
+
 # OS-specific files
 .DS_Store
 Thumbs.db

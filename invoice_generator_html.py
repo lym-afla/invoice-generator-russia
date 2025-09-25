@@ -225,15 +225,6 @@ class InvoiceGeneratorHTML:
             except Exception as e:
                 print(f"❌ WeasyPrint error: {e}")
         
-        # Try alternative PDF generation
-        try:
-            from html_to_pdf_converter import HTMLToPDFConverter
-            converter = HTMLToPDFConverter()
-            if converter.convert_html_to_pdf(html_content, pdf_path):
-                return pdf_path
-        except Exception as e:
-            print(f"⚠️  Alternative PDF conversion failed: {e}")
-        
         # Fallback - if HTML is disabled and PDF failed, return None
         if html_path:
             print(f"📄 HTML generated: {html_path}")

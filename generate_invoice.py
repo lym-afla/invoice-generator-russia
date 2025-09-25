@@ -4,6 +4,7 @@ Main Invoice Generator Script
 Simplified interface for generating invoices
 """
 
+import datetime
 import os
 import base64
 from invoice_generator_html import InvoiceGeneratorHTML
@@ -45,36 +46,51 @@ def create_invoice(
     
     # Prepare invoice data
     invoice_data = {
-        'company_name': 'ИП Линик Ярослав Михайлович',
-        'company_inn': '890305332590',
-        'company_kpp': '',
-        
-        'client_name': client_name,
-        'client_address': '',
-        
-        'items': [
-            {
-                'description': service_description,
-                'unit': 'шт.',
-                'quantity': 1,
-                'price': amount,
-                'total': amount
+        'payee': {
+                'legal_form': "Индивидуальный предприниматель",
+                'legal_form_short': "ИП",
+                'name': "Название компании",
+                'inn': "ИНН компании",
+                'bank_name': "Название банка",
+                'bank_bik': "БИК банка",
+                'bank_corr_account': "Корреспондентский счет банка",
+                'account_number': "Расчетный счет банка",
+                'details_string': f"Название компании, ИНН 'ИНН компании', р/с 'Расчетный счет банка', в банке 'Название банка', БИК 'БИК банка', к/с 'Корреспондентский счет банка'"
+            },
+            'payer': {
+                'name': "Имя клиента"
+            },
+            'invoice': {
+                'number': '',
+                'date': "Дата счета"
+            },
+            'items': [
+                {
+                    'description': service_description,
+                    'unit': 'шт.',
+                    'quantity': 1,
+                    'price': amount,
+                    'total': amount
+                }
+            ],
+            'totals': {
+                'total': amount,
+                'total_in_words': ''
+            },
+            'qr_code_data': {
+                'name': "Название компании",
+                'personal_acc': "Расчетный счет банка",
+                'bank_name': "Название банка",
+                'bic': "БИК банка",
+                'corresp_acc': "Корреспондентский счет банка",
+                'payee_inn': "ИНН компании",
+                'kpp': '',
+                'sum': amount
+            },
+            'qr_code_data_uri': '',
+            'signatures': {
+                'director': "Data"
             }
-        ],
-        
-        'subtotal': amount,
-        'total_amount': amount,
-        
-        'payment_data': {
-            'name': 'Линик Ярослав Михайлович',
-            'personal_acc': '42301810900076433520',
-            'bank_name': 'АО "ТБанк"',
-            'bic': '044525974',
-            'corresp_acc': '30101810145250000974',
-            'payee_inn': '890305332590',
-            'kpp': '',
-            'sum': str(int(amount))
-        }
     }
     
     # Add signature if available

@@ -270,7 +270,7 @@ class ActGenerator:
         # Save HTML only if configured to do so
         from config import PDF_CONFIG
         html_path = None
-        if PDF_CONFIG.get('generate_html', True):
+        if PDF_CONFIG.get('generate_html', False):
             html_path = os.path.join(self.output_dir, f"{filename}.html")
             with open(html_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
