@@ -59,7 +59,7 @@ class InvoiceGeneratorHTML:
         qr_data['sum'] = int(qr_data.get('sum', '')) * 100
         qr_string = (
             f"ST00012|"
-            f'Name={qr_data.get('name', '')}|'
+            f"Name={qr_data.get('name', '')}|"
             f"PersonalAcc={qr_data.get('personal_acc', '')}|"
             f"BankName={qr_data.get('bank_name', '')}|"
             f"BIC={qr_data.get('bic', '')}|"
