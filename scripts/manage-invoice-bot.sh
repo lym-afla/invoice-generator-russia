@@ -41,6 +41,25 @@ check_root() {
     fi
 }
 
+# Check if root is needed for specific commands
+check_root_for_command() {
+    local command="$1"
+    case "$command" in
+        status|logs|help)
+            # These commands can run without root
+            return 0
+            ;;
+        *)
+            # Other commands need root - try to escalate automatically
+            if [[ $EUID -ne 0 ]]; then
+                print_warning "This command requires root privileges"
+                print_status "Attempting to escalate with sudo..."
+                exec sudo "$0" "$@"
+            fi
+            ;;
+    esac
+}
+
 # Check if service exists
 check_service_exists() {
     if ! systemctl list-unit-files | grep -q "^${SERVICE_NAME}.service"; then
@@ -53,7 +72,7 @@ check_service_exists() {
 # Start the service
 start_service() {
     print_header "Starting service..."
-    check_root
+    check_root_for_command "start"
     check_service_exists
     
     if systemctl is-active --quiet "${SERVICE_NAME}"; then
@@ -75,7 +94,7 @@ start_service() {
 # Stop the service
 stop_service() {
     print_header "Stopping service..."
-    check_root
+    check_root_for_command "stop"
     check_service_exists
     
     if systemctl is-active --quiet "${SERVICE_NAME}"; then
@@ -90,7 +109,7 @@ stop_service() {
 # Restart the service
 restart_service() {
     print_header "Restarting service..."
-    check_root
+    check_root_for_command "restart"
     check_service_exists
     
     systemctl restart "${SERVICE_NAME}"
@@ -107,6 +126,7 @@ restart_service() {
 # Show service status
 status_service() {
     print_header "Service status..."
+    check_root_for_command "status"
     check_service_exists
     
     # Service status
@@ -135,6 +155,7 @@ status_service() {
 
 # Show logs
 show_logs() {
+    check_root_for_command "logs"
     local follow_logs=false
     local log_type="service"
     
@@ -202,7 +223,7 @@ show_logs() {
 # Update application
 update_app() {
     print_header "Updating application..."
-    check_root
+    check_root_for_command "update"
     
     # Check if git repository exists
     if [ ! -d "${APP_DIR}/.git" ]; then
@@ -272,10 +293,18 @@ update_app() {
         echo
     fi
     
-    # Update file permissions
+    # Update file permissions and git config
     print_status "Updating file permissions..."
     chown -R "${APP_USER}:${APP_USER}" "${APP_DIR}"
     chmod +x "${APP_DIR}/scripts/"*.sh 2>/dev/null || true
+    
+    # Configure git to ignore file mode changes and reset any phantom changes
+    sudo -u "${APP_USER}" bash -c "
+        cd '${APP_DIR}'
+        git config core.filemode false
+        git config core.autocrlf false
+        git checkout -- . 2>/dev/null || true
+    "
     
     # Activate virtual environment and update dependencies
     print_status "Updating Python dependencies..."

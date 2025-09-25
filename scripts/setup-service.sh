@@ -123,6 +123,19 @@ setup_permissions() {
     chmod 600 "$APP_DIR/.env" 2>/dev/null || true
     chmod 700 "$APP_DIR/signatures" 2>/dev/null || true
     
+    # Configure git for server deployment
+    if [ -d "$APP_DIR/.git" ]; then
+        print_status "Configuring git for server deployment..."
+        sudo -u "$APP_USER" bash -c "
+            cd '$APP_DIR'
+            git config core.filemode false
+            git config core.autocrlf false
+            git config --add safe.directory '$APP_DIR'
+            git checkout -- . 2>/dev/null || true
+        "
+        print_status "Git configuration completed"
+    fi
+    
     print_status "File permissions configured"
 }
 
