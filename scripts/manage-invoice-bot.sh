@@ -300,15 +300,27 @@ update_app() {
     
     # Ensure management script and symlink remain executable after updates
     chmod +x "${APP_DIR}/scripts/manage-invoice-bot.sh"
-    chmod +x "/usr/local/bin/invoice-bot" 2>/dev/null || true
+    
+    # Fix symlink permissions - remove and recreate if needed
+    if [ -L "/usr/local/bin/invoice-bot" ]; then
+        rm -f "/usr/local/bin/invoice-bot"
+    fi
+    ln -sf "${APP_DIR}/scripts/manage-invoice-bot.sh" "/usr/local/bin/invoice-bot"
+    chmod +x "/usr/local/bin/invoice-bot"
+    
+    print_status "Symlink recreated and permissions fixed"
     
     # Configure git to ignore file mode changes and reset any phantom changes
     sudo -u "${APP_USER}" bash -c "
         cd '${APP_DIR}'
         git config core.filemode false
         git config core.autocrlf false
+        git config --global --add safe.directory '${APP_DIR}'
         git checkout -- . 2>/dev/null || true
     "
+    
+    # Also add safe.directory for root user (for future updates)
+    git config --global --add safe.directory "${APP_DIR}" 2>/dev/null || true
     
     # Activate virtual environment and update dependencies
     print_status "Updating Python dependencies..."
@@ -354,6 +366,17 @@ update_app() {
     fi
     
     cd "${ORIGINAL_DIR}"
+    
+    # Verify symlink is working
+    print_status "Verifying symlink functionality..."
+    if [ -x "/usr/local/bin/invoice-bot" ]; then
+        print_status "Symlink is executable and working"
+    else
+        print_warning "Symlink may have permission issues"
+        print_status "Fixing symlink permissions..."
+        chmod +x "/usr/local/bin/invoice-bot"
+    fi
+    
     print_status "Update completed successfully!"
 }
 
