@@ -290,7 +290,8 @@ class DocumentBot:
                 BANK_INFO,
                 client_info,
                 FINANCIAL_SETTINGS,
-                'signatures/YL_Signature.png'
+                'signatures/YL_Signature.png',
+                generation_date
             )
             
             # Save services for next time

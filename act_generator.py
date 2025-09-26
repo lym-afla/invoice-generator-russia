@@ -160,6 +160,141 @@ class ActGenerator:
         
         return result_services
     
+    def generate_act_with_precalculated(self, 
+                                       services_list,
+                                       company_info,
+                                       client_info,
+                                       signature_data,
+                                       generation_date,
+                                       fx_rate,
+                                       total_amount):
+        """
+        Generate act document with precalculated values
+        
+        Args:
+            services_list (list): List of service dictionaries with description, start_date, end_date
+            company_info (dict): Company information
+            client_info (dict): Client information
+            signature_data (str): Signature data (REQUIRED - cannot be None)
+            generation_date (date): Date for document generation
+            fx_rate (float): Precalculated FX rate
+            total_amount (int): Precalculated total amount
+            
+        Returns:
+            str: Path to generated PDF or HTML
+            
+        Raises:
+            ValueError: If contract_date or customer_name is None
+        """
+        
+        print(f"📋 Generating act with precalculated values:")
+        print(f"   📅 Date: {generation_date.strftime('%d.%m.%Y')}")
+        print(f"   💱 FX Rate: {fx_rate}")
+        print(f"   💰 Amount: {total_amount:,} RUB")
+        
+        # Process services to ensure they have dates
+        if services_list is None:
+            # Default services
+            periods = self.get_default_periods()
+            services_list = []
+            for i, period in enumerate(periods):
+                services_list.append({
+                    'description': "Анализ и реализация инвестиционных проектов (Кракен, Citymall)",
+                    'start_date': period['start_date'],
+                    'end_date': period['end_date']
+                })
+        else:
+            # Process provided services to add dates if needed
+            services_list = self.process_services_with_dates(services_list)
+        
+        # Required parameters validation
+        if client_info['contract_date'] is None:
+            raise ValueError("contract_date is required and cannot be None")
+        if client_info['name'] is None:
+            raise ValueError("customer_name is required and cannot be None")
+        
+        year, month, day = map(int, client_info['contract_date'].split('-'))
+        contract_date = date(year, month, day)
+        
+        # Prepare template data matching new template
+        template_data = {
+            'document': {
+                'day': generation_date.strftime("%d"),
+                'month_name': self.get_russian_month(generation_date.month),
+                'year': generation_date.year
+            },
+            'customer': {
+                'name': client_info['name'],
+                # Convert "LASTNAME FIRSTNAME THIRDNAME" to "F. T. LASTNAME"
+                # If only one name is present, use as is
+                'signature_name': (
+                    f"{name_parts[1][0]}.{name_parts[2][0]}. {name_parts[0]}"
+                    if (len((name_parts := client_info['name'].split())) == 3)
+                    else client_info['name']
+                )
+            },
+            'contractor': {
+                'legal_form': company_info['legal_form'],
+                'legal_form_short': company_info['legal_form_short'],
+                'name': company_info['name'],
+                'ogrnip': company_info['ogrnip'],
+                'inn': company_info['inn'],
+                'signature_name': company_info['signature_name']
+            },
+            'contract': {
+                'day': contract_date.strftime("%d"),
+                'month_name': self.get_russian_month(contract_date.month),
+                'year': contract_date.year
+            },
+            'services': services_list,
+            'totals': {
+                'value': total_amount,
+                'fx_rate': fx_rate
+            },
+            'signatures': {
+                'director': signature_data
+            }
+        }
+        
+        # Load and render template
+        template = self.env.get_template('act.html')
+        html_content = template.render(**template_data)
+        
+        # Generate filename with timestamp
+        timestamp = generation_date.strftime("%Y%m")
+        filename = f"Акт_{timestamp}"
+        
+        # Save HTML only if configured to do so
+        from config import PDF_CONFIG
+        html_path = None
+        if PDF_CONFIG.get('generate_html', False):
+            html_path = os.path.join(self.output_dir, f"{filename}.html")
+            with open(html_path, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+        
+        # Try to generate PDF
+        pdf_path = os.path.join(self.output_dir, f"{filename}.pdf")
+        
+        if WEASYPRINT_AVAILABLE:
+            try:
+                weasyprint.HTML(string=html_content, base_url=self.templates_dir).write_pdf(pdf_path)
+                print(f"✅ PDF generated with WeasyPrint: {pdf_path}")
+                return pdf_path
+            except Exception as e:
+                print(f"❌ WeasyPrint error: {e}")
+        
+        # Fallback - if HTML is disabled and PDF failed, return None
+        if html_path:
+            print(f"📄 HTML generated: {html_path}")
+            print("💡 To create PDF manually:")
+            print("   1. Open the HTML file in a web browser")
+            print("   2. Press Ctrl+P (Print)")
+            print("   3. Choose 'Save as PDF' as destination")
+            return html_path
+        else:
+            print("❌ PDF generation failed and HTML generation is disabled")
+            return None
+    
     def generate_act(self, 
                      services_list,
                      company_info,

@@ -33,7 +33,7 @@ def main():
         CLIENT_INFO,
         FINANCIAL_SETTINGS,
         'signatures/YL_Signature.png'
-        )
+        )  # Using default date (today)
     
     # 📊 Summary
     print(f"\n{'='*60}")

@@ -28,13 +28,27 @@ class UnifiedDocumentGenerator:
         year, month, day = map(int, contract_date_str.split('-'))
         self.contract_date = date(year, month, day)        
         
-    def generate_both_documents(self, services_list, company_info, bank_info, client_info, financial_settings, signature_path):
+    def generate_both_documents(
+        self,
+        services_list,
+        company_info,
+        bank_info,
+        client_info,
+        financial_settings,
+        signature_path,
+        generation_date=None
+        ):
         """
         Generate both invoice and act for the given services
         
         Args:
             services_list (list): List of service descriptions (strings) or service dicts
-            invoice_amount (float, optional): Invoice amount, if None uses calculated amount from act
+            company_info (dict): Company information
+            bank_info (dict): Bank information 
+            client_info (dict): Client information
+            financial_settings (dict): Financial settings
+            signature_path (str): Path to signature image
+            generation_date (date): Date for document generation (default: today)
             
         Returns:
             dict: Paths to generated files or None values on failure
@@ -43,6 +57,12 @@ class UnifiedDocumentGenerator:
         print("🚀 Unified Document Generator")
         print("=" * 50)
         
+        # Set generation date
+        if generation_date is None:
+            generation_date = date.today()
+        
+        print(f"📅 Generation date: {generation_date.strftime('%d.%m.%Y')}")
+        
         results = {
             'invoice_path': None,
             'act_path': None,
@@ -50,6 +70,7 @@ class UnifiedDocumentGenerator:
             'act_amount': None
         }
 
+        # Load signature
         if os.path.exists(signature_path):
             try:
                 with open(signature_path, 'rb') as f:
@@ -58,39 +79,48 @@ class UnifiedDocumentGenerator:
             except Exception as e:
                 print(f"⚠️  Could not load signature: {e}")
         
-        # 1. Generate Act first (to get calculated amount)
+        # GET FX RATE ONCE and calculate total amount
+        print(f"\n💱 Fetching {financial_settings['currency']} exchange rate...")
+        try:
+            fx_rate = self.act_generator.get_fx_rate(financial_settings['currency'], generation_date)
+            if fx_rate is None:
+                print(f"❌ Cannot generate documents: Failed to get {financial_settings['currency']} exchange rate from CBR")
+                return results
+            
+            # Calculate total amount and round to nearest 10
+            total_amount_exact = financial_settings['base_rate'] * fx_rate
+            total_amount = round(total_amount_exact / 10) * 10  # Round to nearest 10
+            
+            print(f"💰 Exchange rate: {fx_rate}")
+            print(f"💰 Base rate: {financial_settings['base_rate']:,}")
+            print(f"💰 Calculated amount: {total_amount:,} RUB (rounded from {total_amount_exact:,.2f})")
+            
+            results['act_amount'] = total_amount
+            results['invoice_amount'] = total_amount
+            
+        except Exception as e:
+            print(f"❌ Error fetching exchange rate: {e}")
+            return results
+        
+        # 1. Generate Act 
         print("\n📋 Generating Service Act...")
         try:
-            act_path = self.act_generator.generate_act(
+            act_path = self.act_generator.generate_act_with_precalculated(
                 services_list=services_list,
                 company_info=company_info,
                 client_info=client_info,
-                financial_settings=financial_settings,
-                signature_data=self.signature_data
+                signature_data=self.signature_data,
+                generation_date=generation_date,
+                fx_rate=fx_rate,
+                total_amount=total_amount
             )
             
             if act_path:
                 print(f"✅ Act generated: {os.path.basename(act_path)}")
                 results['act_path'] = act_path
-                
-                # Get the calculated amount from act (same calculation as act generator)
-                try:
-                    fx_rate = self.act_generator.get_fx_rate(financial_settings['currency'], date.today())
-                    if fx_rate:
-                        calculated_amount = int(financial_settings['base_rate'] * fx_rate)
-                        results['act_amount'] = calculated_amount
-                    else:
-                        print("⚠️  Could not get FX rate for invoice amount calculation")
-                except Exception as e:
-                    print(f"⚠️  Error calculating amount: {e}")
-                
-                # Use calculated amount for invoice if not specified  
-                if results.get('act_amount'):
-                    print(f"💰 Using calculated amount: {results['act_amount']:,.0f} RUB")
             else:
                 print("❌ Act generation failed")
                 return results
-                
         except Exception as e:
             print(f"❌ Act generation error: {e}")
             return results
@@ -98,8 +128,8 @@ class UnifiedDocumentGenerator:
         # 2. Generate Invoice
         print("\n🧾 Generating Invoice...")
         try:
-            # Prepare invoice data
-            invoice_data = self._prepare_invoice_data(results['act_amount'], company_info, bank_info, client_info)
+            # Prepare invoice data with generation date
+            invoice_data = self._prepare_invoice_data(total_amount, company_info, bank_info, client_info, generation_date)
             
             invoice_path = self.invoice_generator.generate_invoice(invoice_data)
             
@@ -115,9 +145,23 @@ class UnifiedDocumentGenerator:
         
         return results
     
-    def _prepare_invoice_data(self, total_amount, company_info, bank_info, client_info):
+    def _prepare_invoice_data(
+        self,
+        total_amount,
+        company_info,
+        bank_info,
+        client_info,
+        generation_date
+        ):
         """
         Prepare invoice data from services and config
+        
+        Args:
+            total_amount (float): Total amount for invoice
+            company_info (dict): Company information
+            bank_info (dict): Bank information
+            client_info (dict): Client information  
+            generation_date (date): Date for the invoice
         """
         
         # Convert services to invoice items
@@ -150,7 +194,11 @@ class UnifiedDocumentGenerator:
             },
             'invoice': {
                 'number': '',
-                'date': f"{datetime.now().strftime('%d')} {self.act_generator.get_russian_month(datetime.now().month)} {datetime.now().year} г."
+                'date': (
+                    f"{generation_date.strftime('%d')} "
+                    f"{self.act_generator.get_russian_month(generation_date.month)} "
+                    f"{generation_date.year} г."
+                )
             },
             'items': items,
             'totals': {
