@@ -33,7 +33,7 @@ class InvoiceGenerator:
     
     def generate_invoice_number(self, date=None):
         """
-        Generate invoice number using octal conversion of yyyymm
+        Generate invoice number using octal conversion of yyyymmdd
         
         Args:
             date (datetime, optional): Date for invoice. Defaults to current date.
@@ -44,8 +44,8 @@ class InvoiceGenerator:
         if date is None:
             date = datetime.now()
         
-        yyyymm = int(f"{date.year}{date.month:02d}")
-        octal_number = oct(yyyymm)[2:]  # Remove '0o' prefix
+        yyyymmdd = int(f"{date.year}{date.month:02d}{date.day:02d}")
+        octal_number = oct(yyyymmdd)[2:]  # Remove '0o' prefix
         return f"INV-{octal_number}"
     
     def generate_qr_code(self, payment_data):

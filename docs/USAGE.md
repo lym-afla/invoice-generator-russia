@@ -144,7 +144,7 @@ print('Bot token configured:', bool(TELEGRAM_CONFIG['bot_token']))
 ### **Invoice (Счет)**
 
 **Generated Information:**
-- **Invoice Number**: Auto-generated using octal conversion of YYYYMM
+- **Invoice Number**: Auto-generated using octal conversion of YYYYMMDD
 - **Invoice Date**: Specified generation date
 - **Amount**: Calculated from service act total
 - **QR Code**: СПКР-compliant payment QR code
