@@ -259,7 +259,7 @@ def main():
     
     # Generate both documents
     results = generator.generate_both_documents(
-        services=services,
+        services_list=services,
         company_info=COMPANY_INFO,
         bank_info=BANK_INFO,
         client_info=CLIENT_INFO,
