@@ -169,11 +169,20 @@ class DocumentBot:
             await self.confirm_date(query, context, services)
             
         elif query.data == "update_services":
-            # Ask for new services
-            await query.edit_message_text(
-                "📝 Введите новый список услуг (одна услуга на строку):",
-                parse_mode='Markdown'
-            )
+            # Show previous services without numbers for easy copying
+            last_services = storage.get_last_services()
+            if last_services:
+                plain_list = storage.format_services_list_plain(last_services)
+                await query.edit_message_text(
+                    f"📝 Введите новый список услуг (одна услуга на строку):\n\n"
+                    f"Предыдущий список для копирования:\n```\n{plain_list}\n```",
+                    parse_mode='Markdown'
+                )
+            else:
+                await query.edit_message_text(
+                    "📝 Введите новый список услуг (одна услуга на строку):",
+                    parse_mode='Markdown'
+                )
             context.user_data['expecting_services'] = True
             
         elif query.data.startswith("date_"):

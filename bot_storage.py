@@ -84,6 +84,12 @@ class BotStorage:
         
         return "\n".join(formatted)
 
+    def format_services_list_plain(self, services: List[str]) -> str:
+        """Format services list without numbers for easy copying"""
+        if not services:
+            return "Нет сохраненных услуг"
+        return "\n".join(services)
+
 
 # Global storage instance
 storage = BotStorage()
