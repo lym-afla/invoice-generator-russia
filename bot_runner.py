@@ -8,16 +8,30 @@ import asyncio
 from config import TELEGRAM_CONFIG, DISCORD_CONFIG
 
 
+async def run_telegram():
+    try:
+        from telegram_bot import DocumentBot
+        await DocumentBot().run()
+    except Exception as e:
+        print(f'❌ Telegram bot error: {e}')
+
+
+async def run_discord():
+    try:
+        from discord_bot import DiscordDocumentBot
+        await DiscordDocumentBot().run()
+    except Exception as e:
+        print(f'❌ Discord bot error: {e}')
+
+
 async def main():
     tasks = []
 
     if TELEGRAM_CONFIG['bot_token']:
-        from telegram_bot import DocumentBot
-        tasks.append(asyncio.create_task(DocumentBot().run()))
+        tasks.append(asyncio.create_task(run_telegram()))
 
     if DISCORD_CONFIG['bot_token']:
-        from discord_bot import DiscordDocumentBot
-        tasks.append(asyncio.create_task(DiscordDocumentBot().run()))
+        tasks.append(asyncio.create_task(run_discord()))
 
     if not tasks:
         print('❌ No bot tokens configured. Set TELEGRAM_BOT_TOKEN or DISCORD_BOT_TOKEN in .env')
@@ -32,7 +46,3 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print('\n🛑 Stopping bots...')
-    except ValueError as e:
-        print(f'❌ Configuration error: {e}')
-    except Exception as e:
-        print(f'❌ Bot error: {e}')
