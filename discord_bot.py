@@ -88,6 +88,26 @@ class DateConfirmView(discord.ui.View):
             item.disabled = True
 
 
+class MainMenuView(discord.ui.View):
+    """Persistent main menu buttons — never expires"""
+
+    def __init__(self, bot_ref: 'DiscordDocumentBot'):
+        super().__init__(timeout=None)
+        self.bot_ref = bot_ref
+
+    @discord.ui.button(label='Создать документы', style=discord.ButtonStyle.primary, emoji='📋')
+    async def generate_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.bot_ref.generate_command(interaction)
+
+    @discord.ui.button(label='Статистика', style=discord.ButtonStyle.secondary, emoji='📊')
+    async def status_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.bot_ref.status_command(interaction)
+
+    @discord.ui.button(label='Помощь', style=discord.ButtonStyle.secondary, emoji='❓')
+    async def help_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.bot_ref.help_command(interaction)
+
+
 class DiscordDocumentBot:
     """Discord bot for document generation"""
 
@@ -104,26 +124,40 @@ class DiscordDocumentBot:
             return True
         return str(user_id) == str(self.authorized_user_id)
 
+    async def send_menu(self, interaction: discord.Interaction):
+        if not self.is_authorized(interaction.user.id):
+            await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
+            return
+
+        menu_text = (
+            "**Document Generator Bot**\n\n"
+            "Используйте кнопки ниже для работы с ботом:"
+        )
+
+        view = MainMenuView(self)
+
+        if interaction.response.is_done():
+            msg = await interaction.followup.send(menu_text, view=view)
+        else:
+            await interaction.response.send_message(menu_text, view=view)
+            msg = await interaction.original_response()
+
+        try:
+            await msg.pin()
+        except discord.HTTPException:
+            pass
+
     async def start_command(self, interaction: discord.Interaction):
         if not self.is_authorized(interaction.user.id):
             await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
             return
 
-        welcome_text = (
-            "**Document Generator Bot**\n\n"
-            "Я помогу вам создать документы (Счет и Акт) с минимальными усилиями!\n\n"
-            "**Команды:**\n"
-            "• `/generate` - Создать документы\n"
-            "• `/status` - Статистика генерации\n"
-            "• `/help` - Помощь\n\n"
-            "Готов к работе!"
-        )
-
-        await interaction.response.send_message(welcome_text, ephemeral=True)
+        await self.send_menu(interaction)
 
     async def help_command(self, interaction: discord.Interaction):
         if not self.is_authorized(interaction.user.id):
-            await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
+            if not interaction.response.is_done():
+                await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
             return
 
         help_text = (
@@ -135,14 +169,19 @@ class DiscordDocumentBot:
             "5️⃣ Получите готовые PDF файлы\n\n"
             "**Другие команды:**\n"
             "• `/status` - Посмотреть статистику\n"
+            "• `/menu` - Показать главное меню\n"
             "• `/help` - Эта справка"
         )
 
-        await interaction.response.send_message(help_text, ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(help_text, ephemeral=True)
+        else:
+            await interaction.response.send_message(help_text, ephemeral=True)
 
     async def status_command(self, interaction: discord.Interaction):
         if not self.is_authorized(interaction.user.id):
-            await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
+            if not interaction.response.is_done():
+                await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
             return
 
         stats = storage.get_generation_stats()
@@ -157,11 +196,15 @@ class DiscordDocumentBot:
             f"```\n{storage.format_services_list(last_services)}\n```"
         )
 
-        await interaction.response.send_message(status_text, ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(status_text, ephemeral=True)
+        else:
+            await interaction.response.send_message(status_text, ephemeral=True)
 
     async def generate_command(self, interaction: discord.Interaction):
         if not self.is_authorized(interaction.user.id):
-            await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
+            if not interaction.response.is_done():
+                await interaction.response.send_message('❌ Unauthorized access', ephemeral=True)
             return
 
         last_services = storage.get_last_services()
@@ -173,10 +216,17 @@ class DiscordDocumentBot:
                 f"Хотите использовать эти услуги или обновить список?"
             )
             view = ServiceChoiceView(self)
-            await interaction.response.send_message(message_text, view=view, ephemeral=True)
+
+            if interaction.response.is_done():
+                await interaction.followup.send(message_text, view=view, ephemeral=True)
+            else:
+                await interaction.response.send_message(message_text, view=view, ephemeral=True)
         else:
             modal = ServicesInputModal(self)
-            await interaction.response.send_modal(modal)
+            if interaction.response.is_done():
+                await interaction.followup.send('📝 Введите список услуг через кнопку ниже.', ephemeral=True)
+            else:
+                await interaction.response.send_modal(modal)
 
     async def confirm_date(self, interaction: discord.Interaction, services: List[str]):
         services_text = storage.format_services_list(services)
@@ -273,6 +323,10 @@ class DiscordDocumentBot:
         @tree.command(name='start', description='Начать работу с ботом')
         async def start_cmd(interaction: discord.Interaction):
             await bot_ref.start_command(interaction)
+
+        @tree.command(name='menu', description='Показать главное меню с кнопками')
+        async def menu_cmd(interaction: discord.Interaction):
+            await bot_ref.send_menu(interaction)
 
         @tree.command(name='help', description='Помощь по использованию')
         async def help_cmd(interaction: discord.Interaction):
