@@ -148,7 +148,7 @@ create_service_file() {
     
     cat > "/etc/systemd/system/${SERVICE_NAME}.service" << EOF
 [Unit]
-Description=Invoice Generator Telegram Bot
+Description=Invoice Generator Bot Service
 After=network.target
 
 [Service]
@@ -157,7 +157,7 @@ User=${APP_USER}
 Group=${APP_USER}
 WorkingDirectory=${APP_DIR}
 Environment=PATH=${APP_DIR}/venv/bin
-ExecStart=${APP_DIR}/venv/bin/python telegram_bot.py
+ExecStart=${APP_DIR}/venv/bin/python bot_runner.py
 Restart=always
 RestartSec=10
 StandardOutput=journal

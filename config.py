@@ -45,6 +45,12 @@ TELEGRAM_CONFIG = {
     'chat_id': os.getenv('TELEGRAM_CHAT_ID'),
 }
 
+# Discord Bot Configuration
+DISCORD_CONFIG = {
+    'bot_token': os.getenv('DISCORD_BOT_TOKEN'),
+    'authorized_user_id': os.getenv('DISCORD_AUTHORIZED_USER_ID'),
+}
+
 # File paths
 TEMPLATES_DIR = 'templates'
 OUTPUT_DIR = 'output'
